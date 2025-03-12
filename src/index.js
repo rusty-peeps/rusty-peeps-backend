@@ -26,7 +26,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(`/api/${api_version}`, routes());
 
-
 app.listen(port, () => {
   logger.info(`Server started at ${host}:${port}/api/${api_version}/`);
 });
