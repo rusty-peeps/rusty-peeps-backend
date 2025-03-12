@@ -7,9 +7,7 @@ const database = async () => {
         ? process.env.DATABASE_TEST
         : process.env.DATABASE;
 
-    await mongoose.connect(DATABASE, {
-      useNewUrlParser: true
-    });
+    await mongoose.connect(DATABASE); // No need for deprecated options
 
     logger.info('Connected to the database.');
   } catch (error) {
