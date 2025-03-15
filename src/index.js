@@ -23,7 +23,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('combined', { stream: logStream }));
 app.use(express.urlencoded({ extended: true }));
-
+app.use("/slots/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(`/api/${api_version}`, routes());
 
