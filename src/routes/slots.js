@@ -39,7 +39,7 @@ router.post("/slots/order", createOrder, async (req, res) => {
 
 router.post("/slots/webhook", async (req, res) => {
   try {
-    console.log("Webhook received", req.body,JSON.stringify(req.rawBody));
+    console.log("Webhook received", req.body,JSON.stringify(Buffer.from(req.rawBody)));
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (!webhookSecret) {
       console.error("Webhook secret not configured");
@@ -48,7 +48,7 @@ router.post("/slots/webhook", async (req, res) => {
     
     const receivedSignature = req.headers["x-razorpay-signature"];
 console.log("Received Signature", receivedSignature)
-    let verified=RazorpayMod.validateWebhookSignature(JSON.stringify(req.rawBody), receivedSignature, webhookSecret)
+    let verified=RazorpayMod.validateWebhookSignature(JSON.stringify(Buffer.from(req.rawBody)), receivedSignature, webhookSecret)
     console.log("Verified", verified)
     if(!verified){
       console.error("Invalid Signature")
