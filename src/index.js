@@ -29,7 +29,6 @@ app.use(
     },
   })
 );
-app.use(express.json());
 app.use(`/api/${api_version}`, routes());
 
 app.listen(port, () => {
