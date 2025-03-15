@@ -53,7 +53,7 @@ router.post("/slots/webhook", async (req, res) => {
       console.error("Webhook secret not configured");
       return res.status(500).json({ message: "Webhook secret missing" });
     }
-    console.log("req.body", req)
+    console.log("req.body", JSON.stringify(JSON.parse(req.rawBody)))
     const receivedSignature = req.headers["x-razorpay-signature"];
     let isValid = await validateWebhookSignature(JSON.stringify(JSON.parse(req.rawBody)), receivedSignature, webhookSecret);
     console.log("isValid", isValid)
