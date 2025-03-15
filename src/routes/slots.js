@@ -4,6 +4,7 @@ import crypto from "crypto";
 import Slot from "../models/slot.js";
 import Razorpay from "../utils/razorpay.js";
 import createGoogleMeet from "../utils/googleMeet.js";
+import RazorpayMod from "razorpay";
 import dotenv from "dotenv";
 dotenv.config();
 import { createOrder, createSlot } from "../validators/joi.validator.js";
@@ -38,23 +39,20 @@ router.post("/slots/order", createOrder, async (req, res) => {
 
 router.post("/slots/webhook", async (req, res) => {
   try {
+    console.log("Webhook received", req.body);
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (!webhookSecret) {
       console.error("Webhook secret not configured");
       return res.status(500).json({ message: "Webhook secret missing" });
     }
-
+    
     const receivedSignature = req.headers["x-razorpay-signature"];
-    const generatedSignature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(JSON.stringify(req.body))
-      .digest("hex");
-
-    if (receivedSignature !== generatedSignature) {
-      console.error("Invalid Webhook Signature");
-      return res.status(400).json({ message: "Invalid Webhook Signature" });
+console.log("Received Signature", receivedSignature)
+    let verified=RazorpayMod.validateWebhookSignature(JSON.stringify(req.body), receivedSignature, webhookSecret)
+    if(!verified){
+      console.error("Invalid Signature")
+      return res.status(400).json({ message: "Invalid Signature" });
     }
-
     const event = req.body.event;
 
     if (event === "payment.captured") {
