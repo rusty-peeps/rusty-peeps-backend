@@ -4,17 +4,9 @@ import crypto from "crypto";
 import Slot from "../models/slot.js";
 import Razorpay from "../utils/razorpay.js";
 import createGoogleMeet from "../utils/googleMeet.js";
-// const {
-//   validateWebhookSignature,
-// } = require("razorpay/dist/utils/razorpay-utils");
 import dotenv from "dotenv";
 dotenv.config();
-import {
-  createOrder,
-  verifyCapture,
-  createSlot,
-} from "../validators/joi.validator.js";
-
+import { createOrder, createSlot } from "../validators/joi.validator.js";
 router.post("/slots/order", createOrder, async (req, res) => {
   try {
     const order = await Razorpay.orders.create({
@@ -22,6 +14,17 @@ router.post("/slots/order", createOrder, async (req, res) => {
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     });
+
+    const newSlot = new Slot({
+      order_id: order.id,
+      price: req.validatedBody.amount,
+      payment_status: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await newSlot.save();
+
     return res.status(200).json({
       order_id: order.id,
       currency: order.currency,
@@ -29,111 +32,102 @@ router.post("/slots/order", createOrder, async (req, res) => {
     });
   } catch (err) {
     console.error("Error during payment:", err);
-    return res.status(500).json({
-      status: "failed",
-      code: 500,
-      error: err.message,
-    });
+    return res.status(500).json({ status: "failed", error: err.message });
   }
 });
 
-router.post("/slots/verify-capture", verifyCapture, async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.validatedBody;
-    const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign)
-      .digest("hex");
-    const verified = razorpay_signature === expectedSign;
-
-    if (verified) {
-      return res.status(200).json({ message: "Payment captured" });
-      // const payment = await Razorpay.payments.fetch(razorpay_payment_id);
-      // if (payment.status === "captured") {
-      //   return res.status(200).json({ message: "Payment captured" });
-      // } else {
-      //   res.status(400).json({ message: "Payment not captured" });
-      // }
-    } else {
-      res.status(400).json({ message: "Invalid signature sent" });
-    }
-  } catch (error) {
-    console.error("Error in payment verification", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-});
 router.post("/slots/webhook", async (req, res) => {
   try {
-    let webhookSignature = req.headers["x-razorpay-signature"];
-    let webhookBody = req.body;
-    let isValidate = validateWebhookSignature(
-      JSON.stringify(webhookBody),
-      webhookSignature,
-      process.env.RAZORPAY_WEBHOOK_SECRET
-    );
-    if (isValidate) {
-      if (webhookBody.event === "order.paid") {
-        const slot = await Slot.findOneAndUpdate(
-          { paymentId: webhookBody.payload.order.entity.id },
-          { $set: { isBooked: true } }
-        );
-        console.log("send email to user and book calendar slot");
-        if (!slot) {
-          console.log("Slot not found");
-        }
-      }
-      res.status(200).json({ message: "Webhook received" });
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("Webhook secret not configured");
+      return res.status(500).json({ message: "Webhook secret missing" });
     }
-    
+
+    const receivedSignature = req.headers["x-razorpay-signature"];
+    const generatedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (receivedSignature !== generatedSignature) {
+      console.error("Invalid Webhook Signature");
+      return res.status(400).json({ message: "Invalid Webhook Signature" });
+    }
+
+    const event = req.body.event;
+
+    if (event === "payment.captured") {
+      const { order_id, id, amount, status, method, email } =
+        req.body.payload.payment.entity;
+
+      console.log(`Payment Captured: ${id}, Amount: ${amount / 100} INR`);
+
+      // Update the existing slot
+      await Slot.findOneAndUpdate(
+        { order_id }, // Find by order_id
+        {
+          payment_status: "captured",
+          payment_method: method,
+          email: email,
+          payment_id: id,
+          updatedAt: new Date(),
+          isBooked: true,
+        }
+      );
+
+      res
+        .status(200)
+        .json({ message: "Payment Captured & Updated Successfully" });
+    } else {
+      console.warn(`Unhandled Webhook Event: ${event}`);
+      res.status(400).json({ message: "Unhandled Webhook Event" });
+    }
   } catch (err) {
     console.error("Error in webhook", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 router.post("/slots/book", createSlot, async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      phone,
-      courseId,
-      price,
-      paymentId,
-      platform,
-      dateTime,
-      start_date,
-      end_date,
-    } = req.validatedBody;
-    // let inviteUrl;
-    // if (platform === "google") {
-    //   inviteUrl = await createGoogleMeet(name, email, dateTime);
-    // }
-    const newSlot = new Slot({
-      name,
-      email,
-      phone,
-      courseId,
-      price,
-      paymentId,
-      platform,
-      dateTime,
-      start_date,
-      end_date,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    const { paymentId } = req.validatedBody;
+    const slot = await Slot.findOne({ order_id: paymentId });
 
-    // Save the new slot to the database
-    await newSlot.save();
+    if (!slot) {
+      return res
+        .status(404)
+        .json({ message: "Slot not found for this payment" });
+    }
+
+    Object.assign(slot, req.validatedBody, { updatedAt: new Date() });
+
+    await slot.save();
 
     return res
       .status(200)
-      .json({ message: "Slot booked successfully", data: newSlot });
+      .json({ message: "Slot updated successfully", data: slot });
   } catch (err) {
-    console.error("Error during slot booking:", err);
+    console.error("Error updating slot:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/slots/status/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const slot = await Slot.findOne({ paymentId: orderId });
+
+    if (!slot) {
+      return res.status(404).json({ message: "Slot not found" });
+    }
+    return res.status(200).json({
+      payment_status: slot.payment_status,
+      slotDetails: slot,
+    });
+  } catch (error) {
+    console.error("Error checking slot status:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
