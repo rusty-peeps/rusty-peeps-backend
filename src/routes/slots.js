@@ -4,7 +4,6 @@ import crypto from "crypto";
 import Slot from "../models/slot.js";
 import Razorpay from "../utils/razorpay.js";
 import createGoogleMeet from "../utils/googleMeet.js";
-import RazorpayMod from "razorpay";
 import dotenv from "dotenv";
 dotenv.config();
 import { createOrder, createSlot } from "../validators/joi.validator.js";
@@ -36,29 +35,29 @@ router.post("/slots/order", createOrder, async (req, res) => {
     return res.status(500).json({ status: "failed", error: err.message });
   }
 });
+async function validateWebhookSignature(payload, signature, secret) {
+  // Generate a hash using the HMAC SHA256 algorithm
+  const generatedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(payload, 'utf8')
+    .digest('hex');
+
+  // Compare the generated signature with the one from Razorpay
+  return generatedSignature === signature;
+}
 
 router.post("/slots/webhook", async (req, res) => {
   try {
-    
-
-    console.log("Webhook received", req.body,req.rawBody.toString());
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (!webhookSecret) {
       console.error("Webhook secret not configured");
       return res.status(500).json({ message: "Webhook secret missing" });
     }
+    console.log("req.body", req)
     const receivedSignature = req.headers["x-razorpay-signature"];
-    let verified=RazorpayMod.validateWebhookSignature(req.rawBody.toString(), receivedSignature, webhookSecret)
-    console.log("Verified", verified)
-    
-console.log("Received Signature", receivedSignature)
-const body = await req.body.toString("utf8")
-console.log("Body", body)
-const isValid = RazorpayMod.validateWebhookSignature(body, receivedSignature, webhookSecret);
+    let isValid = await validateWebhookSignature(req.rawBody, receivedSignature, webhookSecret);
     console.log("isValid", isValid)
-    
-    
-    if(!verified){
+    if(!isValid){
       console.error("Invalid Signature")
       return res.status(400).json({ message: "Invalid Signature" });
     }
