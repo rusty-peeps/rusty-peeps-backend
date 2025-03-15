@@ -55,7 +55,7 @@ router.post("/slots/webhook", async (req, res) => {
     }
     console.log("req.body", req)
     const receivedSignature = req.headers["x-razorpay-signature"];
-    let isValid = await validateWebhookSignature(req.rawBody, receivedSignature, webhookSecret);
+    let isValid = await validateWebhookSignature(JSON.stringify(JSON.parse(req.rawBody)), receivedSignature, webhookSecret);
     console.log("isValid", isValid)
     if(!isValid){
       console.error("Invalid Signature")
