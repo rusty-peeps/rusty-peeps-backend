@@ -36,13 +36,10 @@ router.post("/slots/order", createOrder, async (req, res) => {
   }
 });
 async function validateWebhookSignature(payload, signature, secret) {
-  // Generate a hash using the HMAC SHA256 algorithm
   const generatedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload, 'utf8')
-    .digest('hex');
-
-  // Compare the generated signature with the one from Razorpay
+    .createHmac("sha256", secret)
+    .update(payload, "utf8")
+    .digest("hex");
   return generatedSignature === signature;
 }
 
@@ -50,15 +47,17 @@ router.post("/slots/webhook", async (req, res) => {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.error("Webhook secret not configured");
       return res.status(500).json({ message: "Webhook secret missing" });
     }
-    console.log("req.body", JSON.stringify(JSON.parse(req.rawBody)))
+
     const receivedSignature = req.headers["x-razorpay-signature"];
-    let isValid = await validateWebhookSignature(JSON.stringify(JSON.parse(req.rawBody)), receivedSignature, webhookSecret);
-    console.log("isValid", isValid,receivedSignature)
-    if(!isValid){
-      console.error("Invalid Signature")
+    let isValid = await validateWebhookSignature(
+      JSON.stringify(JSON.parse(req.rawBody)),
+      receivedSignature,
+      webhookSecret
+    );
+
+    if (!isValid) {
       return res.status(400).json({ message: "Invalid Signature" });
     }
     const event = req.body.event;
@@ -67,11 +66,8 @@ router.post("/slots/webhook", async (req, res) => {
       const { order_id, id, amount, status, method, email } =
         req.body.payload.payment.entity;
 
-      console.log(`Payment Captured: ${id}, Amount: ${amount / 100} INR`);
-
-      // Update the existing slot
       await Slot.findOneAndUpdate(
-        { order_id }, // Find by order_id
+        { order_id },
         {
           payment_status: "captured",
           payment_method: method,
