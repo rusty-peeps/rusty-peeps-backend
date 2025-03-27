@@ -152,20 +152,4 @@ router.get("/slots", async (req, res) => {
   }
 });
 
-router.put("/slots/:id", async (req, res) => {
-  try {
-    const slot = await Slot.findByIdAndUpdate(
-      {
-        _id: req.params.id,
-      },
-      req.body,
-      { new: true }
-    );
-    if (!slot) return res.status(404).json({ message: "Slot not found" });
-    res.status(200).json(slot);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 export default router;
