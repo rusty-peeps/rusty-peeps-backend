@@ -1,10 +1,10 @@
-import Joi from '@hapi/joi';
-import joiObjectId from 'joi-objectid';
+import Joi from "@hapi/joi";
+import joiObjectId from "joi-objectid";
 Joi.objectId = joiObjectId(Joi);
 
 export const createOrder = (req, res, next) => {
   const schema = Joi.object({
-    amount: Joi.number().required()
+    amount: Joi.number().required(),
   });
   const { error, value } = schema.validate(req.body);
   if (error) {

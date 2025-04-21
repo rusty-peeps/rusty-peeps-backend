@@ -1,18 +1,16 @@
-import HttpStatus from 'http-status-codes';
+import HttpStatus from "http-status-codes";
 
-import logger from '../config/logger';
-
+import logger from "../config/logger";
 
 export function notFound(req, res) {
   res.status(HttpStatus.NOT_FOUND).json({
     code: HttpStatus.NOT_FOUND,
-    message: 'Ooops, route not found'
+    message: "Ooops, route not found",
   });
 }
 
-
 export function appErrorHandler(err, req, res, next) {
-  if (err.code && typeof err.code === 'number') {
+  if (err.code && typeof err.code === "number") {
     logger.error(`
       status - ${err.code}
       message - ${err.message} 
@@ -22,7 +20,7 @@ export function appErrorHandler(err, req, res, next) {
     `);
     res.status(err.code).json({
       code: err.code,
-      message: err.message
+      message: err.message,
     });
   } else {
     next(err);
@@ -40,7 +38,7 @@ export function genericErrorHandler(err, req, res, next) {
 
   res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
     code: HttpStatus.INTERNAL_SERVER_ERROR,
-    data: '',
-    message: err.message
+    data: "",
+    message: err.message,
   });
 }

@@ -115,34 +115,6 @@ router.post("/slots/book", createSlot, async (req, res) => {
   }
 });
 
-router.get("/slots/status/:orderId", async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const slot = await Slot.findOne({ paymentId: orderId });
-
-    if (!slot) {
-      return res.status(404).json({ message: "Slot not found" });
-    }
-    return res.status(200).json({
-      payment_status: slot.payment_status,
-      slotDetails: slot,
-    });
-  } catch (error) {
-    console.error("Error checking slot status:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-});
-
-router.get("/slots/:id", async (req, res) => {
-  try {
-    const slot = await Slot.findById(req.params.id);
-    if (!slot) return res.status(404).json({ message: "Slot not found" });
-    res.status(200).json(slot);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.get("/slots", async (req, res) => {
   try {
     const slots = await Slot.find();

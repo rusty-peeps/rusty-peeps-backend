@@ -3,7 +3,7 @@ const router = express.Router();
 import { createAdmissions } from "../validators/joi.validator.js";
 import Admissions from "../models/admissions.js";
 
-router.post("/admissions",createAdmissions, async (req, res) => {
+router.post("/admissions", createAdmissions, async (req, res) => {
   try {
     const {
       institution_name,
@@ -35,33 +35,6 @@ router.post("/admissions",createAdmissions, async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating slot:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get("/getAdmissions", async (req, res) => {
-  try {
-    const blogs = await Admissions.find();
-    res.status(200).json({
-      data: blogs,
-      message: "Successfully fetched all blogs",
-      code: 200,
-    });
-  } catch (err) {
-    res.status(500).json({ status: "failed", error: err.message });
-  }
-});
-
-router.get("/getAdmissions/:id", async (req, res) => {
-  try {
-    const blog = await Admissions.findById(req.params.id);
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
-    res.status(200).json({
-      data: blog,
-      message: "Successfully fetched blog",
-      code: 200,
-    });
-  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

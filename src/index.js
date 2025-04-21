@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
-import bodyParser from 'body-parser';
+import bodyParser from "body-parser";
 import logger, { logStream } from "./config/logger.js";
 import database from "./config/database.js";
 import routes from "./routes/index.js";
