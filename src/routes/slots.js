@@ -85,7 +85,7 @@ router.post("/slots/webhook", async (req, res) => {
       
       🧾 Order ID: ${order_id}  
       💳 Payment ID: ${id}  
-      💰 Amount Paid: ₹${(amount / 100).toFixed(2)}  
+      💰 Amount Paid: ₹${amount}  
       📦 Payment Method: ${method}
       
       🎥 Your Google Meet link: ${process.env.MEET_URL}
