@@ -3,7 +3,7 @@ const router = express.Router();
 import crypto from "crypto";
 import Slot from "../models/slot.js";
 import Razorpay from "../utils/razorpay.js";
-import createGoogleMeet from "../utils/googleMeet.js";
+import sendEmail from "../utils/sendEmail.js";
 import dotenv from "dotenv";
 dotenv.config();
 import { createOrder, createSlot } from "../validators/joi.validator.js";
@@ -54,7 +54,7 @@ router.post("/slots/webhook", async (req, res) => {
     let isValid = await validateWebhookSignature(
       JSON.stringify(JSON.parse(req.rawBody)),
       receivedSignature,
-      webhookSecret
+      webhookSecret,
     );
 
     if (!isValid) {
@@ -63,7 +63,7 @@ router.post("/slots/webhook", async (req, res) => {
     const event = req.body.event;
 
     if (event === "payment.captured") {
-      const { order_id, id, amount, status, method, email } =
+      const { order_id, id, amount, method, email } =
         req.body.payload.payment.entity;
 
       await Slot.findOneAndUpdate(
@@ -75,9 +75,32 @@ router.post("/slots/webhook", async (req, res) => {
           payment_id: id,
           updatedAt: new Date(),
           isBooked: true,
-        }
+        },
       );
 
+      const subject = "✅ Booking Confirmed - Your Session Details Inside";
+      const body = `Hi,
+      
+      We're excited to let you know that your booking has been successfully confirmed!
+      
+      🧾 Order ID: ${order_id}  
+      💳 Payment ID: ${id}  
+      💰 Amount Paid: ₹${(amount / 100).toFixed(2)}  
+      📦 Payment Method: ${method}
+      
+      🎥 Your Google Meet link: ${process.env.MEET_URL}
+      
+      Please join the session a few minutes early. If you have any questions, feel free to reply to this email.
+      
+      Thank you for choosing us! 🙌
+      `;
+
+      try {
+        await sendEmail(email, subject, body);
+        console.log("Confirmation email sent.");
+      } catch (emailErr) {
+        console.error("Failed to send email:", emailErr);
+      }
       res
         .status(200)
         .json({ message: "Payment Captured & Updated Successfully" });

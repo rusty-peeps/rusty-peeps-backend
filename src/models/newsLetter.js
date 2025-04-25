@@ -10,6 +10,6 @@ const newsLetterSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 export default model("NewsLetter", newsLetterSchema);

@@ -25,6 +25,6 @@ const contactSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 export default model("Contact", contactSchema);

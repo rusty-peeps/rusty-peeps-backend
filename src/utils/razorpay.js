@@ -6,7 +6,7 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
   console.error(
     "Razorpay Key ID or Key Secret is missing",
     process.env.RAZORPAY_KEY_ID,
-    process.env.RAZORPAY_KEY_SECRET
+    process.env.RAZORPAY_KEY_SECRET,
   );
   process.exit(1); // Exit the application
 }

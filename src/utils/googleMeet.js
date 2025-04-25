@@ -4,7 +4,7 @@ const OAuth2 = google.auth.OAuth2;
 const oauth2Client = new OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "urn:ietf:wg:oauth:2.0:oob"
+  "urn:ietf:wg:oauth:2.0:oob",
 );
 
 oauth2Client.setCredentials({
@@ -20,7 +20,7 @@ async function createGoogleMeet(name, email, dateTime) {
     start: { dateTime },
     end: {
       dateTime: new Date(
-        new Date(dateTime).getTime() + 30 * 60000
+        new Date(dateTime).getTime() + 30 * 60000,
       ).toISOString(),
     },
     attendees: [{ email }],

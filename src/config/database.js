@@ -9,9 +9,9 @@ const database = async () => {
 
     await mongoose.connect(DATABASE); // No need for deprecated options
 
-    logger.info("Connected to the database.");
+    console.info("Connected to the database.");
   } catch (error) {
-    logger.error("Could not connect to the database.", error);
+    console.error("Could not connect to the database.", error);
   }
 };
 

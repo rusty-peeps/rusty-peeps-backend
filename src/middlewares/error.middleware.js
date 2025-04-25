@@ -27,7 +27,7 @@ export function appErrorHandler(err, req, res, next) {
   }
 }
 
-export function genericErrorHandler(err, req, res, next) {
+export function genericErrorHandler(err, req, res) {
   logger.error(`
     status - ${HttpStatus.INTERNAL_SERVER_ERROR} 
     message - ${err.stack} 

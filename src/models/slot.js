@@ -42,7 +42,7 @@ const slotSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 slotSchema.index({ paymentId: 1 });
 slotSchema.index({ order_id: 1 });

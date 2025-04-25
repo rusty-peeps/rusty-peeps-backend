@@ -41,6 +41,6 @@ const admissionsSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 export default model("Admissions", admissionsSchema);
